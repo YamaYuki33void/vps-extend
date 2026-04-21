@@ -38,7 +38,7 @@ jobs:
         FFMPEG_PID=$!
 
         # 3. Seleniumスクリプト実行
-        python your_script_name.py
+        python python xserver_automation.py
 
         # 4. スクリプト終了後、FFmpegを停止
         kill -INT $FFMPEG_PID
