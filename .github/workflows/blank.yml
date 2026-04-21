@@ -1,0 +1,54 @@
+name: Xserver Automation with Recording
+
+on:
+  schedule:
+    - cron: '0 9 1 * *' # 毎月1日の午前9時（UTC）に実行
+  workflow_dispatch:    # 手動実行ボタンも作成
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xvfb ffmpeg
+        pip install selenium webdriver-manager
+
+    - name: Run script with Recording
+      env:
+        XSERVER_ID: ${{ secrets.XSERVER_ID }}
+        XSERVER_PASS: ${{ secrets.XSERVER_PASS }}
+      run: |
+        # 1. 仮想ディスプレイ(Xvfb)を起動 (解像度 1280x1024)
+        Xvfb :99 -screen 0 1280x1024x24 &
+        export DISPLAY=:99
+
+        # 2. FFmpegで録画開始 (バックグラウンド実行)
+        ffmpeg -f x11grab -video_size 1280x1024 -i :99.0 -codec:v libx264 -pix_fmt yuv420p video.mp4 &
+        FFMPEG_PID=$!
+
+        # 3. Seleniumスクリプト実行
+        python your_script_name.py
+
+        # 4. スクリプト終了後、FFmpegを停止
+        kill -INT $FFMPEG_PID
+        sleep 2
+
+    - name: Upload logs and video
+      if: always() # 失敗しても成功してもアップロード
+      uses: actions/upload-artifact@v4
+      with:
+        name: automation-results
+        path: |
+          automation.log
+          video.mp4
