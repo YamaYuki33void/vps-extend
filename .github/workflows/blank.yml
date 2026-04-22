@@ -2,7 +2,7 @@ name: Xserver Automation with Recording (Node.js)
 
 on:
   schedule:
-    - cron: '0 9 1 * *' 
+    - cron: '0 9 */2 * *' 
   workflow_dispatch:    
 
 jobs:
@@ -55,3 +55,4 @@ jobs:
         path: |
           automation.log
           video.mp4
+          retention-days: 4
