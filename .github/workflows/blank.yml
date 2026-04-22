@@ -1,9 +1,9 @@
-name: Xserver Automation with Recording
+name: Xserver Automation with Recording (Node.js)
 
 on:
   schedule:
-    - cron: '0 9 1 * *' # 毎月1日の午前9時（UTC）に実行
-  workflow_dispatch:    # 手動実行ボタンも作成
+    - cron: '0 9 1 * *' 
+  workflow_dispatch:    
 
 jobs:
   build:
@@ -13,39 +13,40 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
       with:
-        python-version: '3.10'
+        node-version: '24' # Node.js 24を指定
 
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y xvfb ffmpeg
-        pip install selenium webdriver-manager
+        # 日本語文字化け対策のフォントを追加
+        sudo apt-get install -y xvfb ffmpeg fonts-ipafont-gothic
+        npm install selenium-webdriver chromedriver
 
     - name: Run script with Recording
       env:
         XSERVER_ID: ${{ secrets.XSERVER_ID }}
         XSERVER_PASS: ${{ secrets.XSERVER_PASS }}
       run: |
-        # 1. 仮想ディスプレイ(Xvfb)を起動 (解像度 1280x1024)
+        # 1. 仮想ディスプレイ起動
         Xvfb :99 -screen 0 1280x1024x24 &
         export DISPLAY=:99
 
-        # 2. FFmpegで録画開始 (バックグラウンド実行)
+        # 2. 録画開始
         ffmpeg -f x11grab -video_size 1280x1024 -i :99.0 -codec:v libx264 -pix_fmt yuv420p video.mp4 &
         FFMPEG_PID=$!
 
-        # 3. Seleniumスクリプト実行
-        python your_script_name.py
+        # 3. Node.jsスクリプト実行
+        node xserver_automation.js
 
-        # 4. スクリプト終了後、FFmpegを停止
+        # 4. 録画停止
         kill -INT $FFMPEG_PID
         sleep 2
 
     - name: Upload logs and video
-      if: always() # 失敗しても成功してもアップロード
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: automation-results
