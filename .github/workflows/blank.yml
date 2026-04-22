@@ -21,7 +21,8 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y xvfb ffmpeg
+        # 日本語フォント (fonts-ipafont-gothic) を追加
+        sudo apt-get install -y xvfb ffmpeg fonts-ipafont-gothic
         pip install selenium webdriver-manager
 
     - name: Run script with Recording
